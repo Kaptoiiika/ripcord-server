@@ -13,7 +13,11 @@ type Answer = { answer: string }
 type Offer = { offer: string }
 type Ice = { ice: string }
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*',
+  },
+ })
 export class WebrtcGateway {
   @WebSocketServer() server: Server
   constructor(private roomService: RoomService) {}
