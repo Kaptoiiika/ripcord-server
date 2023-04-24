@@ -17,7 +17,7 @@ type Ice = { ice: string }
   cors: {
     origin: '*',
   },
- })
+})
 export class WebrtcGateway {
   @WebSocketServer() server: Server
   constructor(private roomService: RoomService) {}
@@ -31,16 +31,20 @@ export class WebrtcGateway {
       id: client.id,
       username: payload.username || client.id,
     }
-    const room = this.roomService.addUserToRoom(payload.name, user)
-    this.server.to(payload.name).emit('user_join', user)
-    const usersWithOutCurrentClient = room.userList.filter(
-      (curuser) => curuser.id !== user.id,
-    )
-    client.join(payload.name)
-    client.emit('users_in_room', usersWithOutCurrentClient)
-    client.on('disconnecting', () => {
-      this.leaveRoom(client)
-    })
+    try {
+      const room = this.roomService.addUserToRoom(payload.name, user)
+      this.server.to(payload.name).emit('user_join', user)
+      const usersWithOutCurrentClient = room.userList.filter(
+        (curuser) => curuser.id !== user.id,
+      )
+      client.join(payload.name)
+      client.emit('users_in_room', usersWithOutCurrentClient)
+      client.on('disconnecting', () => {
+        this.leaveRoom(client)
+      })
+    } catch (error) {
+      client.emit('room_is_full')
+    }
   }
 
   @SubscribeMessage('leave')

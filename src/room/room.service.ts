@@ -60,10 +60,14 @@ export class RoomService {
 
   addUserToRoom(roomId: IRoomId, user: IUser): IRoom {
     const room = this.roomList.get(roomId)
-    
+
     if (!room) {
       const newRoom = this.createRoom(roomId, [user])
       return newRoom
+    }
+
+    if (room.userList.length >= 4) {
+      throw new Error()
     }
 
     if (room.userList.find((curuser) => curuser.id === user.id)) {
