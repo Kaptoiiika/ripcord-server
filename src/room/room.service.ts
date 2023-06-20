@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { IRoom, IRoomId, IRoomName, IUser, IUserId } from './room.types'
 
 const defaultRooms = ['kaptoiiika', 'qwerty']
@@ -66,9 +62,9 @@ export class RoomService {
       return newRoom
     }
 
-    if (room.userList.length >= 4) {
-      throw new Error()
-    }
+    // if (room.userList.length >= 4) {
+    //   throw new Error()
+    // }
 
     if (room.userList.find((curuser) => curuser.id === user.id)) {
       return room
