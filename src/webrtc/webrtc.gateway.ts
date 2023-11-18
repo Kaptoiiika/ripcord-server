@@ -36,9 +36,9 @@ export class WebrtcGateway {
       this.server.to(payload.name).emit('user_join', {...user, reconnect: payload.reconnect})
       const usersWithOutCurrentClient = room.userList.filter(
         (curuser) => curuser.id !== user.id,
-      )
+      ).map(u=>({...u, reconnect: payload.reconnect}))
       client.join(payload.name)
-      client.emit('users_in_room', {...usersWithOutCurrentClient, reconnect: payload.reconnect})
+      client.emit('users_in_room', usersWithOutCurrentClient)
       client.on('disconnecting', () => {
         const rooms = Array.from(client.rooms.values()).filter(
           (room) => room !== client.id,
