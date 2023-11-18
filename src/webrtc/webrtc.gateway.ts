@@ -7,7 +7,7 @@ import { Socket, Server } from 'socket.io'
 import { RoomService } from 'src/room/room.service'
 import { IUser } from 'src/room/room.types'
 
-type joinRoom = { name: string; username: string }
+type joinRoom = { name: string; username: string, reconnect?:boolean }
 type ClientId = { id: string }
 type Answer = { answer: string }
 type Offer = { offer: string }
@@ -33,12 +33,12 @@ export class WebrtcGateway {
     }
     try {
       const room = this.roomService.addUserToRoom(payload.name, user)
-      this.server.to(payload.name).emit('user_join', user)
+      this.server.to(payload.name).emit('user_join', {...user, reconnect: payload.reconnect})
       const usersWithOutCurrentClient = room.userList.filter(
         (curuser) => curuser.id !== user.id,
       )
       client.join(payload.name)
-      client.emit('users_in_room', usersWithOutCurrentClient)
+      client.emit('users_in_room', {...usersWithOutCurrentClient, reconnect: payload.reconnect})
       client.on('disconnecting', () => {
         const rooms = Array.from(client.rooms.values()).filter(
           (room) => room !== client.id,
@@ -64,9 +64,7 @@ export class WebrtcGateway {
       this.server.to(roomId).emit('user_leave', { id: client.id })
     })
   }
-
   
-
   @SubscribeMessage('new_answer')
   sendAnswer(client: Socket, data: ClientId & Answer) {
     const { id, answer } = data
