@@ -5,6 +5,7 @@ export type IRoomId = string
 export interface IUser {
   id: string
   username: string
+  avatarSrc: string
 }
 
 export interface IRoom {
