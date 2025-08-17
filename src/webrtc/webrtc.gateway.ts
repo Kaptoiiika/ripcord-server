@@ -48,13 +48,7 @@ export class WebrtcGateway {
       client.join(payload.name)
       client.emit('users_in_room', usersWithOutCurrentClient)
       client.on('disconnecting', () => {
-        const rooms = Array.from(client.rooms.values()).filter(
-          (room) => room !== client.id,
-        )
-        rooms.forEach((roomId) => {
-          client.leave(roomId)
-          this.roomService.removeUserFromRoom(roomId, client.id)
-        })
+        this.leaveRoom(client)
       })
     } catch (error) {
       client.emit('room_is_full')
