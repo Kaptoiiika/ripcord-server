@@ -10,6 +10,10 @@ const SCRYPT_KEY_LENGTH = 32
 const TOKEN_IV_LENGTH = 12
 const TOKEN_KEY_SALT = 'ripcord-room-token'
 
+// Buffer is a Uint8Array at runtime, but its slice() type can return a
+// SharedArrayBuffer-backed view, which current TypeScript rejects as BinaryLike.
+const asBytes = (value: Buffer) => value as unknown as Uint8Array
+
 let tokenKey: Buffer | undefined
 
 const getTokenKey = () => {
@@ -31,7 +35,7 @@ const getTokenKey = () => {
 
 export const hashPassword = (password: string) => {
   const salt = randomBytes(16)
-  const hash = scryptSync(password, salt, SCRYPT_KEY_LENGTH)
+  const hash = scryptSync(password, asBytes(salt), SCRYPT_KEY_LENGTH)
 
   return `${salt.toString('base64url')}.${hash.toString('base64url')}`
 }
@@ -43,19 +47,23 @@ export const verifyPassword = (password: string, passwordHash: string) => {
 
   const salt = Buffer.from(saltPart, 'base64url')
   const expectedHash = Buffer.from(hashPart, 'base64url')
-  const actualHash = scryptSync(password, salt, expectedHash.length)
+  const actualHash = scryptSync(password, asBytes(salt), expectedHash.length)
 
   if (actualHash.length !== expectedHash.length) return false
 
-  return timingSafeEqual(actualHash, expectedHash)
+  return timingSafeEqual(asBytes(actualHash), asBytes(expectedHash))
 }
 
 export const encryptRoomToken = (roomId: string, password: string) => {
   const iv = randomBytes(TOKEN_IV_LENGTH)
-  const cipher = createCipheriv('aes-256-gcm', getTokenKey(), iv)
+  const cipher = createCipheriv(
+    'aes-256-gcm',
+    asBytes(getTokenKey()),
+    asBytes(iv),
+  )
   const ciphertext = Buffer.concat([
-    cipher.update(JSON.stringify({ roomId, password }), 'utf8'),
-    cipher.final(),
+    asBytes(cipher.update(JSON.stringify({ roomId, password }), 'utf8')),
+    asBytes(cipher.final()),
   ])
   const authTag = cipher.getAuthTag()
 
@@ -72,13 +80,15 @@ export const decryptRoomToken = (token: string, roomId: string) => {
   try {
     const decipher = createDecipheriv(
       'aes-256-gcm',
-      getTokenKey(),
-      Buffer.from(ivPart, 'base64url'),
+      asBytes(getTokenKey()),
+      asBytes(Buffer.from(ivPart, 'base64url')),
     )
-    decipher.setAuthTag(Buffer.from(authTagPart, 'base64url'))
+    decipher.setAuthTag(asBytes(Buffer.from(authTagPart, 'base64url')))
     const plaintext = Buffer.concat([
-      decipher.update(Buffer.from(ciphertextPart, 'base64url')),
-      decipher.final(),
+      asBytes(
+        decipher.update(asBytes(Buffer.from(ciphertextPart, 'base64url'))),
+      ),
+      asBytes(decipher.final()),
     ]).toString('utf8')
     const payload = JSON.parse(plaintext) as {
       roomId?: unknown

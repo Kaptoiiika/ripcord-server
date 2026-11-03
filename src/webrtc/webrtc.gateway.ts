@@ -16,6 +16,7 @@ type joinRoom = {
   token?: string
 }
 type ClientId = { id: string }
+type ConnectionId = { connectionId?: string }
 type Answer = { answer: string }
 type Offer = { offer: string }
 type Ice = { ice: string }
@@ -85,21 +86,21 @@ export class WebrtcGateway {
   }
 
   @SubscribeMessage('new_answer')
-  sendAnswer(client: Socket, data: ClientId & Answer) {
-    const { id, answer } = data
-    const resp = { id: client.id, answer: answer }
+  sendAnswer(client: Socket, data: ClientId & Answer & ConnectionId) {
+    const { id, answer, connectionId } = data
+    const resp = { id: client.id, answer, connectionId }
     this.server.to(id).emit('new_answer', resp)
   }
   @SubscribeMessage('new_offer')
-  sendOffer(client: Socket, data: ClientId & Offer) {
-    const { id, offer } = data
-    const resp = { id: client.id, offer: offer }
+  sendOffer(client: Socket, data: ClientId & Offer & ConnectionId) {
+    const { id, offer, connectionId } = data
+    const resp = { id: client.id, offer, connectionId }
     this.server.to(id).emit('new_offer', resp)
   }
   @SubscribeMessage('new_ice')
-  sendIce(client: Socket, data: ClientId & Ice) {
-    const { id, ice } = data
-    const resp = { id: client.id, ice: ice }
+  sendIce(client: Socket, data: ClientId & Ice & ConnectionId) {
+    const { id, ice, connectionId } = data
+    const resp = { id: client.id, ice, connectionId }
     this.server.to(id).emit('new_ice', resp)
   }
   @SubscribeMessage('request_new_offer')
