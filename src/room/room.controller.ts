@@ -7,11 +7,13 @@ export class RoomController {
 
   @Get('/')
   getRoomList() {
-    return this.roomService.getRoomList()
+    return this.roomService
+      .getRoomList()
+      .map((room) => this.roomService.toPublicRoom(room))
   }
 
   @Get(':id')
   getRoom(@Param('id') id: string) {
-    return this.roomService.getRoom(id)
+    return this.roomService.toPublicRoom(this.roomService.getRoom(id))
   }
 }

@@ -12,4 +12,22 @@ export interface IRoom {
   userList: IUser[]
   name: IRoomName
   id: IRoomId
+  passwordHash?: string
+  removeTimer?: NodeJS.Timeout
 }
+
+export interface IPublicRoom {
+  id: IRoomId
+  name: IRoomName
+  userList: IUser[]
+  hasPassword: boolean
+}
+
+export type JoinRoomCredentials = {
+  password?: string
+  token?: string
+}
+
+export type JoinRoomResult =
+  | { isJoined: true; room: IRoom; token?: string }
+  | { isJoined: false; isWrongPassword: boolean }

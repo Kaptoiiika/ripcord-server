@@ -12,6 +12,8 @@ type joinRoom = {
   username: string
   reconnect?: boolean
   avatarSrc?: string
+  password?: string
+  token?: string
 }
 type ClientId = { id: string }
 type Answer = { answer: string }
@@ -38,11 +40,26 @@ export class WebrtcGateway {
       avatarSrc: payload.avatarSrc,
     }
     try {
-      const room = this.roomService.addUserToRoom(payload.name, user)
+      const result = this.roomService.joinRoom(payload.name, user, {
+        password: payload.password,
+        token: payload.token,
+      })
+
+      if ('isWrongPassword' in result) {
+        client.emit('room_password_required', {
+          isWrongPassword: result.isWrongPassword,
+        })
+        return
+      }
+
+      if (result.token) {
+        client.emit('room_token', { token: result.token })
+      }
+
       this.server
         .to(payload.name)
         .emit('user_join', { ...user, reconnect: payload.reconnect })
-      const usersWithOutCurrentClient = room.userList
+      const usersWithOutCurrentClient = result.room.userList
         .filter((curuser) => curuser.id !== user.id)
         .map((u) => ({ ...u, reconnect: payload.reconnect }))
       client.join(payload.name)
